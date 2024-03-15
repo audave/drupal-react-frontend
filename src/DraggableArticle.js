@@ -1,8 +1,9 @@
 import React from "react";
 import useSemiPersistentState from "./semiPersistentState";
 
-
-const DRUPAL_BASEURL = 'http://localhost:57660';
+const DRUPAL_ENDPOINT = process.env.REACT_APP_DRUPAL_ARTICLE_ENDPOINT;
+const DRUPAL_BASEURL = process.env.REACT_APP_DRUPAL_BASEURL;
+// const DRUPAL_BASEURL = 'http://localhost:57660';
 
 const DraggableArticle = ({item}) => {
     let image_url = DRUPAL_BASEURL + item.field_image.uri.url;

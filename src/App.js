@@ -1,22 +1,13 @@
 import './App.css';
 import React from 'react';
+import useSemiPersistentState from "./semiPersistentState";
 import DraggableArticle from "./DraggableArticle";
-// import useSemiPersistentState from "./semiPersistentState";
 
-const DRUPAL_ENDPOINT = 'http://localhost:57660/jsonapi/node/article?include=field_image';
-const DRUPAL_BASEURL = 'http://localhost:57660';
 
-const useSemiPersistentState = (key, initialState) => {
-    const [value, setValue] = React.useState(
-        localStorage.getItem(key) || initialState
-    );
+const DRUPAL_ENDPOINT = process.env.REACT_APP_DRUPAL_ARTICLE_ENDPOINT;
+const DRUPAL_BASEURL = process.env.REACT_APP_DRUPAL_BASEURL;
 
-    React.useEffect(() => {
-        localStorage.setItem(key, value);
-    }, [value, key]);
 
-    return [value, setValue];
-};
 const storiesReducer = (state, action) => {
     switch (action.type) {
         case 'STORIES_FETCH_INIT':
@@ -56,10 +47,6 @@ const App = () => {
         'search',
         'React'
     );
-
-    const handleSearch = event => {
-        setSearchTerm(event.target.value);
-    };
 
     const [stories, dispatchStories] = React.useReducer(
         storiesReducer,
