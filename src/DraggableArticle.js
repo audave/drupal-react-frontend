@@ -1,11 +1,14 @@
 import React from "react";
 import useSemiPersistentState from "./semiPersistentState";
+import {getAuthClient} from './utils/auth';
 
-const DRUPAL_ENDPOINT = process.env.REACT_APP_DRUPAL_ARTICLE_ENDPOINT;
+const auth = getAuthClient();
+
+// const DRUPAL_ENDPOINT = process.env.REACT_APP_DRUPAL_ARTICLE_ENDPOINT;
 const DRUPAL_BASEURL = process.env.REACT_APP_DRUPAL_BASEURL;
 // const DRUPAL_BASEURL = 'http://localhost:57660';
 
-const DraggableArticle = ({item}) => {
+const DraggableArticle = ({item, onRemoveItem, cookie}) => {
     let image_url = DRUPAL_BASEURL + item.field_image.uri.url;
 
     let article_key = 'article_' + item.id;
@@ -35,7 +38,7 @@ const DraggableArticle = ({item}) => {
 
     const dragEvent = (event) => {
         // console.log(event);
-        if(event.clientX !== 0) {
+        if (event.clientX !== 0) {
             setOffset(JSON.stringify({
                 x: JSON.parse(finishingOffset).x + event.clientX - JSON.parse(startingOffset).x,
                 y: JSON.parse(finishingOffset).y + event.clientY - JSON.parse(startingOffset).y,
@@ -49,26 +52,34 @@ const DraggableArticle = ({item}) => {
             id: item.id,
             value: value,
         }
-
-        fetch('http://localhost:57660/article-update/vote-endpoint', {
+        const fetchOptions = {
             method: 'POST',
-            mode: 'cors',
-            body: JSON.stringify(data) // body data type must match "Content-Type" header
-        }).then(r => {})
+            headers: new Headers({
+                'Content-Type': 'application/json',
+            }),
+            body: JSON.stringify(data)
+        };
+
+        auth.fetchWithAuthentication('/article-update/vote-endpoint', fetchOptions)
+            .then(r => {
+                onRemoveItem(item.id);
+            })
     };
 
     let offset_object = JSON.parse(Offset);
-    let transform = 'translate('+ offset_object.x + 'px,' + offset_object.y +'px)';
+    let transform = 'translate(' + offset_object.x + 'px,' + offset_object.y + 'px)';
 
     return (
         <div className={'article'}
              onDrag={(event) => dragEvent(event, article_key)}
              onDragStart={(event) => dragStartEvent(event)}
              onDragEnd={(event) => dragEndEvent(event)}
-             style={{ 'transform': transform}}
+             style={{'transform': transform}}
         >
             <h2>{item.title}</h2>
             <img src={image_url}/>
+            <span>Downvotes: {item.field_downvotes}</span>
+            <span>Upvotes: {item.field_upvotes}</span>
             <div className={'buttons-container'}>
                 <button value="downvote" onClick={() => buttonClick('downvote')}>Down Vote</button>
                 <button value="upvote" onClick={() => buttonClick('upvote')}>Up Vote</button>

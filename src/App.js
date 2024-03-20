@@ -1,7 +1,9 @@
 import './App.css';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import useSemiPersistentState from "./semiPersistentState";
 import DraggableArticle from "./DraggableArticle";
+
+import LoginForm from "./components/LoginForm";
 
 
 const DRUPAL_ENDPOINT = process.env.REACT_APP_DRUPAL_ARTICLE_ENDPOINT;
@@ -34,7 +36,7 @@ const storiesReducer = (state, action) => {
             return {
                 ...state,
                 data: state.data.filter(
-                    story => action.payload.objectID !== story.objectID
+                    story => action.payload !== story.id
                 ),
             };
         default:
@@ -43,22 +45,24 @@ const storiesReducer = (state, action) => {
 };
 
 const App = () => {
-    const [searchTerm, setSearchTerm] = useSemiPersistentState(
-        'search',
-        'React'
-    );
+
+    const [cookie, setCookie] = useState(null);
 
     const [stories, dispatchStories] = React.useReducer(
         storiesReducer,
         {data: [], isLoading: false, isError: false}
     );
 
-    React.useEffect(() => {
-        if (searchTerm === '') return;
+    const handleRemoveItem = item => {
+        dispatchStories({
+            type: 'REMOVE_STORY',
+            payload: item,
+        });
+    };
 
+    React.useEffect(() => {
         dispatchStories({type: 'STORIES_FETCH_INIT'});
 
-        // fetch(`${API_ENDPOINT}${searchTerm}`)
         fetch(`${DRUPAL_ENDPOINT}`)
             .then(response => response.json())
             .then(result => {
@@ -70,18 +74,22 @@ const App = () => {
             .catch(() =>
                 dispatchStories({type: 'STORIES_FETCH_FAILURE'})
             );
-    }, [searchTerm]);
+    }, []);
 
 
     return (
         <div>
+            <LoginForm />
             {stories.isError && <p>Something went wrong ...</p>}
             {stories.isLoading ? (
                 <p>Loading ...</p>
             ) : (
                 <div className={'main-container'}>
                     <h1>we've got data</h1>
-                    <List list={stories.data} />
+                    <List
+                        list={stories.data}
+                        onRemoveItem={handleRemoveItem}
+                    />
                 </div>
             )}
         </div>
@@ -89,10 +97,11 @@ const App = () => {
 };
 
 
-const List = ({list}) => {
+const List = ({list, onRemoveItem}) => {
     var ListItems = list.map(item => (<DraggableArticle
         key={item.id}
         item={item}
+        onRemoveItem={onRemoveItem}
     />));
 
     return (<div className={'article-list'}>
