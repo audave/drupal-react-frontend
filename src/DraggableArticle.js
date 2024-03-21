@@ -4,12 +4,10 @@ import {getAuthClient} from './utils/auth';
 
 const auth = getAuthClient();
 
-// const DRUPAL_ENDPOINT = process.env.REACT_APP_DRUPAL_ARTICLE_ENDPOINT;
 const DRUPAL_BASEURL = process.env.REACT_APP_DRUPAL_BASEURL;
-// const DRUPAL_BASEURL = 'http://localhost:57660';
 
 const DraggableArticle = ({item, onRemoveItem, cookie}) => {
-    let image_url = DRUPAL_BASEURL + item.field_image.uri.url;
+    let image_url = item.field_image.image_style_uri.react_app;
 
     let article_key = 'article_' + item.id;
 
@@ -37,7 +35,6 @@ const DraggableArticle = ({item, onRemoveItem, cookie}) => {
     }
 
     const dragEvent = (event) => {
-        // console.log(event);
         if (event.clientX !== 0) {
             setOffset(JSON.stringify({
                 x: JSON.parse(finishingOffset).x + event.clientX - JSON.parse(startingOffset).x,
@@ -69,6 +66,9 @@ const DraggableArticle = ({item, onRemoveItem, cookie}) => {
     let offset_object = JSON.parse(Offset);
     let transform = 'translate(' + offset_object.x + 'px,' + offset_object.y + 'px)';
 
+    let total_votes = item.field_upvotes + item.field_downvotes;
+    let dog_popularity = Math.floor((total_votes ? item.field_upvotes/total_votes : 0.5) * 100);
+    let popularity_slider = 'translateX(' + dog_popularity + '%)';
     return (
         <div className={'article'}
              onDrag={(event) => dragEvent(event, article_key)}
@@ -78,6 +78,13 @@ const DraggableArticle = ({item, onRemoveItem, cookie}) => {
         >
             <h2>{item.title}</h2>
             <img src={image_url}/>
+            <h4>How popular is my dog</h4>
+            <div className={'results-bar'}>
+                <div className={'dog-emoji'}
+                      title="popularity scale"
+                      style={{'transform': popularity_slider}}
+                >&#128054;</div>
+            </div>
             <span>Downvotes: {item.field_downvotes}</span>
             <span>Upvotes: {item.field_upvotes}</span>
             <div className={'buttons-container'}>
