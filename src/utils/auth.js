@@ -20,7 +20,7 @@ const refreshPromises = [];
 export function getAuthClient(config = {}) {
     const defaultConfig = {
         // Base URL of your Drupal site.
-        base: 'http://drupal-react-backend.lndo.site',
+        base: process.env.REACT_APP_DRUPAL_BASEURL,
         // Name to use when storing the token in localStorage.
         token_name: 'drupal-oauth-token',
         // OAuth client ID - get from Drupal.
