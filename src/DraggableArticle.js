@@ -1,5 +1,5 @@
-import React from "react";
-import useSemiPersistentState from "./semiPersistentState";
+import React, {useState} from "react";
+// import useSemiPersistentState from "./semiPersistentState";
 import {getAuthClient} from './utils/auth';
 
 const auth = getAuthClient();
@@ -11,34 +11,51 @@ const DraggableArticle = ({item, onRemoveItem, cookie}) => {
 
     let article_key = 'article_' + item.id;
 
-    const [Offset, setOffset] = useSemiPersistentState(
-        article_key,
+    const [Offset, setOffset] = useState(
         JSON.stringify({x: 0, y: 0}),
     );
 
-    const [finishingOffset, setFinishingOffset] = useSemiPersistentState(
-        article_key + '_finish',
+    const [startingOffset, setStartingOffset] = useState(
         JSON.stringify({x: 0, y: 0}),
     );
 
-    const [startingOffset, setStartingOffset] = useSemiPersistentState(
-        article_key + '_start',
-        JSON.stringify({x: 0, y: 0}),
-    );
+    const [isDragging, setIsDragging] = useState(false)
+    const [isDismissed, setIsDismissed] = useState(false)
 
     const dragStartEvent = (event) => {
         setStartingOffset(JSON.stringify({x: event.clientX, y: event.clientY}));
+        setIsDragging(true);
     };
 
     const dragEndEvent = (event) => {
-        setFinishingOffset(Offset);
+        if(!isDismissed) {
+            setOffset(JSON.stringify({x: 0, y: 0}));
+        }
+        setIsDragging(false);
     }
 
     const dragEvent = (event) => {
+        console.log(event);
         if (event.clientX !== 0) {
+            if((event.clientX - JSON.parse(startingOffset).x) > 300 ||
+                (event.clientX - JSON.parse(startingOffset).x) < -300
+            ) {
+
+                if((event.clientX - JSON.parse(startingOffset).x) > 300 ) {
+                    buttonClick('upvote');
+                    return;
+                }
+
+                if((event.clientX - JSON.parse(startingOffset).x) < -300 ) {
+                    buttonClick('downvote');
+                    return;
+                }
+            }
+
+
             setOffset(JSON.stringify({
-                x: JSON.parse(finishingOffset).x + event.clientX - JSON.parse(startingOffset).x,
-                y: JSON.parse(finishingOffset).y + event.clientY - JSON.parse(startingOffset).y,
+                x: event.clientX - JSON.parse(startingOffset).x,
+                y: event.clientY - JSON.parse(startingOffset).y,
             }))
 
         }
@@ -57,6 +74,15 @@ const DraggableArticle = ({item, onRemoveItem, cookie}) => {
             body: JSON.stringify(data)
         };
 
+        if(value === 'upvote') {
+            setOffset(JSON.stringify({x: 2000, y: 0}));
+        }
+        if(value === 'downvote') {
+            setOffset(JSON.stringify({x: -2000, y: 0}));
+        }
+        setIsDismissed(true);
+        setIsDragging(false);
+
         auth.fetchWithAuthentication('/article-update/vote-endpoint', fetchOptions)
             .then(r => {
                 onRemoveItem(item.id);
@@ -69,8 +95,9 @@ const DraggableArticle = ({item, onRemoveItem, cookie}) => {
     let total_votes = item.field_upvotes + item.field_downvotes;
     let dog_popularity = Math.floor((total_votes ? item.field_upvotes/total_votes : 0.5) * 100);
     let popularity_slider = 'translateX(' + dog_popularity + '%)';
+    let cssClasses = 'article ' + (isDragging ? 'dragging' : 'not-dragging');
     return (
-        <div className={'article'}
+        <div className={cssClasses}
              onDrag={(event) => dragEvent(event, article_key)}
              onDragStart={(event) => dragStartEvent(event)}
              onDragEnd={(event) => dragEndEvent(event)}

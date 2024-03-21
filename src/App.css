@@ -52,7 +52,9 @@
 .article img {
   max-width: 100%;
 }
-
+.article h4 {
+  margin-bottom: 0;
+}
 .results-bar {
   display: block;
   width: 100%;
@@ -61,4 +63,8 @@
   /* Padding to make our puppy emoji fit*/
   padding-right: 25px;
   box-sizing: border-box;
+}
+
+.article.not-dragging {
+  transition: 0.5s;
 }
